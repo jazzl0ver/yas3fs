@@ -67,14 +67,13 @@ within an [Auto Scaling](http://aws.amazon.com/autoscaling/) group.
 
 ### Quick Installation
 
-#### WARNING: PIP installation is no longer supported. Use "git clone" instead.
+#### WARNING: installing the PyPI package by name is no longer supported. Use "git clone" and install it into a virtual environment instead.
 
-Requires [Python](http://www.python.org/download/) 2.6 or higher.
-Install using [pip](http://www.pip-installer.org/en/latest/).
-
-    pip install yas3fs
-
-If it fails, check the CentOS 6 installation steps below.
+Requires [Python](http://www.python.org/download/) 3 with `venv` support.
+The recommended layout is a dedicated virtual environment in `/opt/yas3fs`.
+On Amazon Linux 2023, use `python3.11` for the virtual environment instead of the system `/usr/bin/python3`, which remains Python 3.9. Do not use Python 3.12 while yas3fs depends on boto 2.x.
+If `/opt/yas3fs` was already created with Python 3.9 or 3.12, unmount any active yas3fs mounts and recreate the virtual environment with Python 3.11.
+On legacy CentOS 6, use Python 2.7 `virtualenv` in the same `/opt/yas3fs` location.
 
 If you want to do a quick test here's the installation procedure depending on the OS flavor (Linux or Mac):
 
@@ -84,71 +83,98 @@ If you want to do a quick test here's the installation procedure depending on th
 * If you want to have more than one node in sync, create an SNS topic in the same region as the S3 bucket and write down the full topic ARN (you need it to run the tool if more than one client is connected to the same bucket/path).
 * Create a IAM Role that gives access to the S3 and SNS/SQS resources you need or pass the AWS credentials to the tool using environment variables (see `-h`).
 
-**On Amazon Linux**
+**On Amazon Linux 2023**
 
-    sudo yum -y install fuse fuse-libs
-    sudo easy_install pip
-    sudo pip install yas3fs # assume root installation
+    sudo dnf -y install fuse fuse-libs git python3.11 python3.11-pip
+    sudo /usr/bin/python3.11 -m venv /opt/yas3fs
+    sudo /opt/yas3fs/bin/python -m pip install --upgrade pip setuptools wheel
+    sudo mkdir -p /opt/yas3fs/src
+    sudo git clone https://github.com/danilop/yas3fs.git /opt/yas3fs/src/yas3fs
+    sudo /opt/yas3fs/bin/python -m pip install /opt/yas3fs/src/yas3fs
+    sudo rm -rf /opt/yas3fs/src
     sudo sed -i'' 's/^# *user_allow_other/user_allow_other/' /etc/fuse.conf # uncomment user_allow_other
-    yas3fs -h # See the usage
+    /opt/yas3fs/bin/yas3fs -h # See the usage
     mkdir LOCAL-PATH
     # For single host mount
-    yas3fs s3://BUCKET/PATH LOCAL-PATH
+    /opt/yas3fs/bin/yas3fs s3://BUCKET/PATH LOCAL-PATH
     # For multiple hosts mount
-    yas3fs s3://BUCKET/PATH LOCAL-PATH --topic TOPIC-ARN --new-queue
+    /opt/yas3fs/bin/yas3fs s3://BUCKET/PATH LOCAL-PATH --topic TOPIC-ARN --new-queue
 
 **On Ubuntu Linux**
 
     sudo apt-get update
-    sudo apt-get -y install fuse python-pip 
-    sudo pip install yas3fs # assume root installation
+    sudo apt-get -y install fuse git python3 python3-venv
+    sudo python3 -m venv /opt/yas3fs
+    sudo /opt/yas3fs/bin/python -m pip install --upgrade pip setuptools wheel
+    sudo mkdir -p /opt/yas3fs/src
+    sudo git clone https://github.com/danilop/yas3fs.git /opt/yas3fs/src/yas3fs
+    sudo /opt/yas3fs/bin/python -m pip install /opt/yas3fs/src/yas3fs
+    sudo rm -rf /opt/yas3fs/src
     sudo sed -i'' 's/^# *user_allow_other/user_allow_other/' /etc/fuse.conf # uncomment user_allow_other
     sudo chmod a+r /etc/fuse.conf # make it readable by anybody, it is not the default on Ubuntu
-    yas3fs -h # See the usage
+    /opt/yas3fs/bin/yas3fs -h # See the usage
     mkdir LOCAL-PATH
     # For single host mount
-    yas3fs s3://BUCKET/PATH LOCAL-PATH
+    /opt/yas3fs/bin/yas3fs s3://BUCKET/PATH LOCAL-PATH
     # For multiple hosts mount
-    yas3fs s3://BUCKET/PATH LOCAL-PATH --topic TOPIC-ARN --new-queue
+    /opt/yas3fs/bin/yas3fs s3://BUCKET/PATH LOCAL-PATH --topic TOPIC-ARN --new-queue
 
 **On a Mac with OS X**
 
 Install FUSE for OS X from <http://osxfuse.github.com>.
 
-    sudo pip install yas3fs # assume root installation
+    sudo python3 -m venv /opt/yas3fs
+    sudo /opt/yas3fs/bin/python -m pip install --upgrade pip setuptools wheel
+    sudo mkdir -p /opt/yas3fs/src
+    sudo git clone https://github.com/danilop/yas3fs.git /opt/yas3fs/src/yas3fs
+    sudo /opt/yas3fs/bin/python -m pip install /opt/yas3fs/src/yas3fs
+    sudo rm -rf /opt/yas3fs/src
     mkdir LOCAL-PATH
     # For single host mount
-    yas3fs s3://BUCKET/PATH LOCAL-PATH
+    /opt/yas3fs/bin/yas3fs s3://BUCKET/PATH LOCAL-PATH
     # For multiple hosts mount
-    yas3fs s3://BUCKET/PATH LOCAL-PATH --topic TOPIC-ARN --new-queue
+    /opt/yas3fs/bin/yas3fs s3://BUCKET/PATH LOCAL-PATH --topic TOPIC-ARN --new-queue
 
 **On CentOS 6**
 
-    sudo yum -y install fuse fuse-libs centos-release-scl
-    sudo yum -y install python27
-    # upgrade setuptools
-    scl enable python27 -- pip install setuptools --upgrade
-    # grab the latest sources
-    git clone https://github.com/danilop/yas3fs.git
-    cd yas3fs
-    scl enable python27 -- python setup.py install
-    scl enable python27 -- yas3fs -h # See the usage
+    sudo yum -y install fuse fuse-libs centos-release-scl git
+    sudo yum -y install python27 python27-python-virtualenv
+    sudo /opt/rh/python27/root/usr/bin/virtualenv /opt/yas3fs
+    sudo /opt/yas3fs/bin/python -m pip install --upgrade pip setuptools wheel
+    sudo mkdir -p /opt/yas3fs/src
+    sudo git clone https://github.com/danilop/yas3fs.git /opt/yas3fs/src/yas3fs
+    sudo /opt/yas3fs/bin/python -m pip install /opt/yas3fs/src/yas3fs
+    sudo rm -rf /opt/yas3fs/src
+    /opt/yas3fs/bin/yas3fs -h # See the usage
     mkdir LOCAL-PATH
     # For single host mount
-    scl enable python27 -- yas3fs s3://BUCKET/PATH LOCAL-PATH
+    /opt/yas3fs/bin/yas3fs s3://BUCKET/PATH LOCAL-PATH
     # For multiple hosts mount
-    scl enable python27 -- yas3fs s3://BUCKET/PATH LOCAL-PATH --topic TOPIC-ARN --new-queue
+    /opt/yas3fs/bin/yas3fs s3://BUCKET/PATH LOCAL-PATH --topic TOPIC-ARN --new-queue
 
 **/etc/fstab support**
 
-    # Put contrib/mount.yas3fs to /usr/local/sbin and make the symlink
-    chmod +x /usr/local/sbin/mount.yas3fs
-    cd /sbin; sudo ln -s /usr/local/sbin/mount.yas3fs.centos6 # replace centos6 to amzn1 for Amazon Linux installation
+    # Use contrib/mount.yas3fs.amzn1 on Amazon Linux or contrib/mount.yas3fs.centos6 on CentOS 6
+    sudo cp contrib/mount.yas3fs.amzn1 /usr/local/sbin/mount.yas3fs
+    sudo chmod +x /usr/local/sbin/mount.yas3fs
+    sudo ln -sf /usr/local/sbin/mount.yas3fs /sbin/mount.yas3fs
     # Add the contents of contrib/fstab.snippet to /etc/fstab and modify accordingly
     # Try to mount
     mount /mnt/mybucket
 
 **Workaround to unmount yas3fs correctly during host shutdown or reboot**
+
+On Amazon Linux 2023:
+
+    sudo cp contrib/unmount-yas3fs.init.d /usr/local/sbin/unmount-yas3fs
+    sudo chmod +x /usr/local/sbin/unmount-yas3fs
+    sudo cp contrib/fstab-decode.py /usr/local/sbin/fstab-decode.py
+    sudo chmod +x /usr/local/sbin/fstab-decode.py
+    sudo cp contrib/unmount-yas3fs.service /etc/systemd/system/unmount-yas3fs.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable --now unmount-yas3fs.service
+
+On chkconfig-based systems:
 
     sudo cp contrib/unmount-yas3fs.init.d /etc/init.d/unmount-yas3fs
     sudo chmod +x /etc/init.d/unmount-yas3fs

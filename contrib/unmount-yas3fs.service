@@ -1,0 +1,17 @@
+[Unit]
+Description=Unmount yas3fs volumes before shutdown
+Documentation=https://github.com/danilop/yas3fs
+DefaultDependencies=no
+After=network.target network-online.target remote-fs.target
+Before=umount.target shutdown.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/true
+ExecStop=/usr/local/sbin/unmount-yas3fs stop
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target

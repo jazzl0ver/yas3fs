@@ -2,6 +2,7 @@
 
 s3bucket=${1##*#}       # extract the last part after '#' in 'yas3fs#bucket' string
 localpath=$2
+YAS3FS=${YAS3FS:-/opt/yas3fs/bin/yas3fs}
 
 ismounted=$(mount -l | grep -q $localpath && echo yes)
 if [ "$ismounted" = "yes" ]; then
@@ -31,4 +32,4 @@ if [ ! "x$topic" = "x" ]; then
     fi
 fi
 
-yas3fs --download-retries-num 10 --recheck-s3 ${logline} "s3://${s3bucket}" "${localpath}" ${topicline} ${queueline}
+"${YAS3FS}" --download-retries-num 10 --recheck-s3 ${logline} "s3://${s3bucket}" "${localpath}" ${topicline} ${queueline}

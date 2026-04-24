@@ -2,6 +2,7 @@
 
 s3bucket=${1##*#}       # extract the last part after '#' in 'yas3fs#bucket' string
 localpath=$2
+YAS3FS=${YAS3FS:-/opt/yas3fs/bin/yas3fs}
 topic=$(echo $4 | /bin/grep -o 'topic=[^,]*' | /bin/cut -f2 -d=)
 queue=$(echo $4 | /bin/grep -o 'queue=[^,]*' | /bin/cut -f2 -d=)
 log=$(echo $4 | /bin/grep -o 'yas3fslog')
@@ -24,4 +25,4 @@ if [ ! "x$topic" = "x" ]; then
     fi
 fi
 
-scl enable python27 -- yas3fs --download-retries-num 10 --recheck-s3 ${logline} "s3://${s3bucket}" "${localpath}" ${topicline} ${queueline}
+"${YAS3FS}" --download-retries-num 10 --recheck-s3 ${logline} "s3://${s3bucket}" "${localpath}" ${topicline} ${queueline}
